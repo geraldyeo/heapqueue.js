@@ -57,85 +57,98 @@
  * heapq.pop(); // ==> 3
  */
 (function(win) {
-	function isFunction(functionToCheck) {
+	function _isFunction(func) {
 		var o = {};
-		return functionToCheck && o.toString.call(functionToCheck) === '[object Function]';
+		return func && o.toString.call(func) === '[object Function]';
 	}
 
-	function sort(heap) {
-		var pos = heap.data.length - 1,
-			parent, x;
-
+	function _bubbleUp(heap, pos) {
+		var parent, x;
 		while (pos > 0) {
 			parent = (pos - 1) >>> 1;
-			if (heap.cmp(heap.data[pos], heap.data[parent]) < 0) {
-				x = heap.data[parent];
-				heap.data[parent] = heap.data[pos];
-				heap.data[pos] = x;
+			if (heap.cmp(heap._data[pos], heap._data[parent]) < 0) {
+				x = heap._data[parent];
+				heap._data[parent] = heap._data[pos];
+				heap._data[pos] = x;
 				pos = parent;
 			} else {
 				break;
 			}
 		}
-		return (heap.length = heap.data.length);
+		return void 0;
+	}
+
+	function _bubbleDown(heap, pos) {
+		var last, left, minIndex, right, x;
+		last = heap._data.length - 1;
+		while (true) {
+			left = (pos << 1) + 1;
+			right = left + 1;
+			minIndex = pos;
+			if (left <= last && heap.cmp(heap._data[left], heap._data[minIndex]) < 0) {
+				minIndex = left;
+			}
+			if (right <= last && heap.cmp(heap._data[right], heap._data[minIndex]) < 0) {
+				minIndex = right;
+			}
+			if (minIndex !== pos) {
+				x = heap._data[minIndex];
+				heap._data[minIndex] = heap._data[pos];
+				heap._data[pos] = x;
+				pos = minIndex;
+			} else {
+				break;
+			}
+		}
+		return void 0;
+	}
+
+	function _heapify(heap) {
+		var i, _i, _max;
+		if (heap._data.length > 0) {
+			for (i = _i = 1, _max = heap._data.length; 1 <= _max ? _i < _max : _i > _max; i = 1 <= _max ? ++_i : --_i) {
+				_bubbleUp(heap, i);
+			}
+		}
+		return void 0;
 	}
 
 	function HeapQueue(data, cmp) {
 		this.cmp = (cmp || function(a, b) {
 			return a - b;
 		});
-		this.length = 0;
-		this.data = [];
+		this._data = [];
 
 		if (data && data.constructor === Array) {
-			for (var i = 0, max = data.length; i < max; i++) {
-				this.push(data[i]);
-			};
-		} else if (isFunction(data)) {
+			this._data = data.concat();
+			_heapify(this);
+		} else if (_isFunction(data)) {
 			this.cmp = data;
 		}
 	}
 
+	HeapQueue.prototype.size = function() {
+		return this._data.length;
+	};
+
 	HeapQueue.prototype.peek = function() {
-		return this.data[0];
+		return this._data[0];
 	};
 
 	HeapQueue.prototype.push = function(value) {
-		this.data.push(value);
-		return sort(this);
+		this._data.push(value);
+		_bubbleUp(this, this._data.length - 1);
+		return void 0;
 	};
 
 	HeapQueue.prototype.pop = function() {
-		var last_val = this.data.pop(),
-			ret = this.data[0];
-		if (this.data.length > 0) {
-			this.data[0] = last_val;
-			var pos = 0,
-				last = this.data.length - 1,
-				left, right, minIndex, x;
-			while (1) {
-				left = (pos << 1) + 1;
-				right = left + 1;
-				minIndex = pos;
-				if (left <= last && this.cmp(this.data[left], this.data[minIndex]) < 0) {
-					minIndex = left;
-				}
-				if (right <= last && this.cmp(this.data[right], this.data[minIndex]) < 0) {
-					minIndex = right;
-				}
-				if (minIndex !== pos) {
-					x = this.data[minIndex];
-					this.data[minIndex] = this.data[pos];
-					this.data[pos] = x;
-					pos = minIndex;
-				} else {
-					break;
-				}
-			}
-		} else {
-			ret = last_val;
+		var last, ret;
+		ret = this._data[0];
+		last = this._data.pop();
+		if (this._data.length > 0) {
+			this._data[0] = last;
+			_bubbleDown(this, 0);
 		}
-		this.length--;
 		return ret;
 	};
 
