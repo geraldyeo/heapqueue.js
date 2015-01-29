@@ -1,19 +1,13 @@
 /*
- * This implementation is very loosely based off js-priority-queue
- * by Adam Hooper from https://github.com/adamhooper/js-priority-queue
- *
- * The js-priority-queue implementation seemed a teensy bit bloated
- * with its require.js dependency and multiple storage strategies
- * when all but one were strongly discouraged. So here is a kind of
- * condensed version of the functionality with only the features that
- * I particularly needed.
+ * js-priority-queue by Adam Hooper (https://github.com/adamhooper/js-priority-queue)
+ * heapqueue.js by antimatter15 (https://github.com/antimatter15/heapqueue.js)
  *
  * Using it is pretty simple, you just create an instance of HeapQueue
  * while optionally specifying a comparator as the argument:
  *
  * var heapq = new HeapQueue();
  *
- * var customq = new HeapQueue(function(a, b){
+ * var customq = HeapQueue.create(function(a, b){
  *   // if b > a, return negative
  *   // means that it spits out the smallest item first
  *   return a - b;
@@ -21,7 +15,7 @@
  *
  * You can now initialize your heap with inital values:
  *
- * var heapq = new HeapQueue([42, 3, 25, 14]);
+ * var heapq = HeapQueue.create([42, 3, 25, 14]);
  *
  * Note that in this case, the default comparator is identical to
  * the comparator which is used explicitly in the second queue.
@@ -56,8 +50,21 @@
  * heapq.pop(); // ==> 2
  * heapq.pop(); // ==> 3
  */
-(function(win) {
-	function _isFunction(func) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['exports'], function (exports) {
+            factory((root.HeapQueue = exports));
+        });
+    } else if (typeof exports === 'object') {
+        // CommonJS
+        factory(exports);
+    } else {
+        // Browser globals
+        factory((root.HeapQueue = {}));
+    }
+}(this, function (exports) {
+    function _isFunction(func) {
 		var o = {};
 		return func && o.toString.call(func) === '[object Function]';
 	}
@@ -127,30 +134,32 @@
 		}
 	}
 
-	HeapQueue.prototype.size = function() {
-		return this._data.length;
-	};
-
-	HeapQueue.prototype.peek = function() {
-		return this._data[0];
-	};
-
-	HeapQueue.prototype.push = function(value) {
-		this._data.push(value);
-		_bubbleUp(this, this._data.length - 1);
-		return void 0;
-	};
-
-	HeapQueue.prototype.pop = function() {
-		var last, ret;
-		ret = this._data[0];
-		last = this._data.pop();
-		if (this._data.length > 0) {
-			this._data[0] = last;
-			_bubbleDown(this, 0);
+	HeapQueue.prototype = {
+		size: function() {
+			return this._data.length;
+		},
+		peek: function() {
+			return this._data[0];
+		},
+		push: function(value) {
+			this._data.push(value);
+			_bubbleUp(this, this._data.length - 1);
+			return void 0;
+		},
+		pop: function() {
+			var last, ret;
+			ret = this._data[0];
+			last = this._data.pop();
+			if (this._data.length > 0) {
+				this._data[0] = last;
+				_bubbleDown(this, 0);
+			}
+			return ret;
 		}
-		return ret;
 	};
 
-	win.HeapQueue = win.HeapQueue || HeapQueue;
-})(window);
+	// export factory
+	exports.create = function(options) {
+		return new HeapQueue(options.data, options.predicate);
+	};
+}));
