@@ -54,16 +54,16 @@
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
         define(['exports'], function (exports) {
-            factory((root.HeapQueue = exports));
+            root.HeapQueue = factory(root, exports);
         });
     } else if (typeof exports === 'object') {
         // CommonJS
-        factory(exports);
+        factory(root, exports);
     } else {
         // Browser globals
-        factory((root.HeapQueue = {}));
+        root.HeapQueue = factory(root, {});
     }
-}(this, function (exports) {
+}(this, function (root, HeapQueue) {
     function _isFunction(func) {
 		var o = {};
 		return func && o.toString.call(func) === '[object Function]';
@@ -158,8 +158,5 @@
 		}
 	};
 
-	// export factory
-	exports.create = function(options) {
-		return new HeapQueue(options.data, options.predicate);
-	};
+	return HeapQueue;
 }));
